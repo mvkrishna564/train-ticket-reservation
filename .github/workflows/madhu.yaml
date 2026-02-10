@@ -21,6 +21,18 @@ jobs:
 
       - name: Build application
         run: mvn clean package
+      - name: Detect artifact type
+        run: |
+         if ls target/*.jar 1> /dev/null 2>&1; then
+         echo "JAR file detected"
+         elif ls target/*.war 1> /dev/null 2>&1; then
+         echo "WAR file detected"
+         else
+         echo "No JAR or WAR found"
+         exit 1
+         fi
+
+        
 
       - name: Upload build artifact
         uses: actions/upload-artifact@v4
