@@ -2,7 +2,7 @@ name: Manual CI-CD to VM
 
 on:
   push:
-    branches: [ main ]
+    branches: [ master ]
 
 jobs:
   build:
