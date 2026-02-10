@@ -41,7 +41,7 @@ jobs:
 
       - name: Create SSH private key
         run: |
-          printf "${{ secrets.VM_SSH_KEY }}" > key.pem
+          echo "${{ secrets.VM_SSH_KEY }}" > key.pem
           chmod 600 key.pem
 
       - name: Prepare directory on VM
