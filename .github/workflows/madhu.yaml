@@ -68,7 +68,7 @@ jobs:
           scp -o StrictHostKeyChecking=no \
               -i key.pem \
               *.war \
-              ${{ secrets.VM_USER }}@${{ secrets.VM_HOST }}:/home/${{ secrets.VM_USER }}/app/
+              ${{ secrets.VM_USER }}@${{ secrets.VM_HOST }}:/home/${{ secrets.VM_USER }}/app
 
       - name: Restart application on VM
         run: |
