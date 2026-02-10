@@ -1,61 +1,68 @@
----
--on:
-  pull_request:
-    branches:
-      - develop
-      jobs:
-        build:
-          runs-on: ubuntu-latest
-          steps:
-            - uses: actions/checkout@v2
-            - name: setup jdk
-              uses: actions/setup-java@v2
-              with:
-                disrtibution: 'temurin'
-                java-version: '17'
-            
-            -name: maven package
-              run: mvn clean  package
 
-            -name: upload artifact
-              uses: actions/upload-artifact@v2
-              with:
-                name: java-app
+name: Manual CI-CD to VM
 
-            -name: deploy to server
-              needs: build
-              runs-on: ubuntu-latest
+on:
+  push:
+    branches: [ master ]
 
-              steps:
-                -name:download artifact
-                  uses: actions/download-artifact@v2
-                  with:
-                    name: java-app
+jobs:
+  build:
+    runs-on: ubuntu-latest
 
-                -name: create ssh key
-                  run: |
-                    mkdir -p ~/.ssh
-                    echo "${{ secrets.VM_SSH_KEY }}" > ~/.ssh/id_rsa
-                    chmod 600 ~/.ssh/id_rsa
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v4
 
-                -name: create directory on server
-                  run : ssh -o StrictHostKeyChecking=no|
-                    ${{ secrets.VM_USER }}@${{ secrets.vm_HOST }} "mkdir -p /home/${{ secrets.VM_USER }}/app"
+      - name: Setup Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
 
-                -name: copy artifact to server
-                run: scp -o StrictHostKeyChecking=no target/*.war ${{ secrets.VM_USER }}@${{ secrets.vm_HOST }}:/home/${{ secrets.VM_USER }}/app
+      - name: Build application
+        run: mvn clean package
 
-                -name: restart server
-                run:   
-                    ssh -o StrictHostKeyChecking=no \
-                    -i ~/.ssh/id_rsa \
-                     ${{ secrets.VM_USER }}@${{ secrets.VM_HOST }} \
-                     "pkill -f java || true && \
-                      cd /home/${{ secrets.VM_USER }}/app && \
-                      nohup java -jar *.jar > app.log 2>&1 &"
-              
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: app
+          path: target/*.war
 
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
 
-        
-        
-      
+    steps:
+      - name: Download build artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: app
+          path: .
+
+      - name: Create SSH private key
+        run: |
+          echo "${{ secrets.VM_SSH_KEY }}" > key.pem
+          chmod 600 key.pem
+
+      - name: Prepare directory on VM
+        run: |
+          ssh -o StrictHostKeyChecking=no \
+              -i key.pem \
+              ${{ secrets.VM_USER }}@${{ secrets.VM_HOST }} \
+              "mkdir -p /home/${{ secrets.VM_USER }}/app"
+
+      - name: Copy JAR to VM
+        run: |
+          scp -o StrictHostKeyChecking=no \
+              -i key.pem \
+              *.jar \
+              ${{ secrets.VM_USER }}@${{ secrets.VM_HOST }}:/home/${{ secrets.VM_USER }}/app/
+
+      - name: Restart application on VM
+        run: |
+          ssh -o StrictHostKeyChecking=no \
+              -i key.pem \
+              ${{ secrets.VM_USER }}@${{ secrets.VM_HOST }} \
+              "pkill -f java || true && \
+               cd /home/${{ secrets.VM_USER }}/app && \
+               nohup java -jar *.jar > app.log 2>&1 &"
