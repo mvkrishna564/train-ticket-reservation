@@ -44,7 +44,13 @@ jobs:
           echo "${{ secrets.VM_SSH_KEY }}" > key.pem
           chmod 600 key.pem
 
-      
+      - name: Prepare directory on VM
+        run: |
+          ssh -o StrictHostKeyChecking=no \
+              -i key.pem \
+              ${{ secrets.VM_USER }}@${{ secrets.VM_HOST }} \
+              "mkdir -p /home/${{ secrets.VM_USER }}/app"
+
       - name: Copy JAR to VM
         run: |
           scp -o StrictHostKeyChecking=no \
