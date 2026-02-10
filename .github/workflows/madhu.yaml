@@ -36,6 +36,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: app
+          path: .
 
       - name: Create SSH private key
         run: |
@@ -49,7 +50,7 @@ jobs:
               ${{ secrets.VM_USER }}@${{ secrets.VM_HOST }} \
               "mkdir -p /home/${{ secrets.VM_USER }}/app"
 
-      - name: Copy JAR to VM (manual SCP)
+      - name: Copy JAR to VM
         run: |
           scp -o StrictHostKeyChecking=no \
               -i key.pem \
@@ -64,7 +65,3 @@ jobs:
               "pkill -f java || true && \
                cd /home/${{ secrets.VM_USER }}/app && \
                nohup java -jar *.jar > app.log 2>&1 &"
-
-
-
-
