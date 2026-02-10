@@ -51,12 +51,6 @@ jobs:
               ${{ secrets.VM_USER }}@${{ secrets.VM_HOST }} \
               "mkdir -p /home/${{ secrets.VM_USER }}/app"
 
-      - name: Create app directory on VM
-        run: |
-          ssh -o StrictHostKeyChecking=no -i key.pem \
-          ${{ secrets.VM_USER }}@${{ secrets.VM_HOST }} \
-          "mkdir -p /home/${{ secrets.VM_USER }}/app"
-
       - name: Copy WAR to VM
         run: |
           scp -o StrictHostKeyChecking=no \
