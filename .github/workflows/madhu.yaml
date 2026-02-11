@@ -54,7 +54,7 @@ jobs:
       - name: Create SSH private key
         run: |
           echo "${{ secrets.VM_SSH_KEY }}" > key.pem
-          chmod 700 key.pem
+          chmod 600 key.pem
 
       - name: Prepare directory on VM
         run: |
@@ -68,7 +68,7 @@ jobs:
           scp -o StrictHostKeyChecking=no \
               -i key.pem \
               *.war \
-              ${{ secrets.VM_USER }}@${{ secrets.VM_HOST }}:/home/${{ secrets.VM_USER }}/app
+              "${{ secrets.VM_USER }}@${{ secrets.VM_HOST }}:/home/${{ secrets.VM_USER }}/app"
 
       - name: Restart application on VM
         run: |
